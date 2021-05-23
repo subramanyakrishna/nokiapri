@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="static\world.png" />
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="description" content="Solar energy output prediction at particular area with machine learning The total solar energy output at current hour is"></meta>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Solar Energy Output Prediction</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td, th {
+            border: 1px solid #dddddd;
+            text-align: left;
+        }
+
+        tr:nth-child(even) {
+            background-color: #dddddd;
+        }
+        #lineChart{
+            border: 5px solid #dddddd;
+            width: 70% !important;
+            height: 70% !important;
+            margin: 0 auto;
+        }
+        @media only screen and (max-width: 600px) {
+            #lineChart {
+            width:100% !important;
+        }
+        .brand-logo{
+            font-size: medium !important;
+            overflow-wrap: break-word;
+        }
+        .editsize{
+            font-size: medium;
+        }
+        } 
+    </style>
+</head>
+
+<body>
+    <nav style="background-color:#001531;">
+        <div class="nav-wrapper">
+          <a href="http://127.0.0.1:5000/" class="brand-logo left">Solar Energy Output Prediction</a>
+          <ul id="nav-mobile" class="right">
+            <li>
+              <a href="https://github.com/kulalsk2/nokiaml/" target="_blank">github</a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    <div style="padding: 20px">
+        <h5 class="editsize"><u><b>Prediction and Analysis</b></u></h5>
+        <br>
+        <table >
+            <tbody>
+              <tr>
+                <td>The total solar energy output at current hour </td>
+                <td><b>{{currTimeprediction}} kW</b></td>
+              </tr>
+              <tr>
+                <td>The total solar energy output per day </td>
+                <td><b> {{solarOutputPerDay}} kW</b></td>
+              </tr>
+              <tr>
+                <td>Average solar energy per hour </td>
+                <td><b>{{averageSolarEnergyPerHour}} kWh</b></td>
+              </tr>
+              <tr>
+                <td>Average cost savings  </td>
+                <td><b>Rs {{costsavings}} per hour</b></td>
+              </tr>
+              <tr>
+                <td>Total carbon emission due to Combustion of Natural gas</td>
+                <td><b>0.185 kg/KWh</b></td>
+              </tr>
+              <tr>
+                <td>Total carbon emission that can be reduced </td>
+                <td><b>{{co2}} kg</b></td>
+              </tr>
+              <tr>
+                <td>Nearest services for solar panel installation in <b>{{city_name}}</b>  </td>
+                <td>
+                    <b><a id="nearServiceAnchor" target="_blank" href=""><small>(click here to go services website)</small></a></b></td>
+              </tr>
+            </tbody>
+          </table>
+          <button onclick="download_csv_file()"> Download CSV </button>  
+
+        
+        <br>
+        <h6>
+            <b><u>The solar energy produced at different hours in a day is plotted below</u></b>
+        </h6>
+
+        <br>
+        <canvas id="lineChart">
+        </canvas>
+        <div style="display: none"> there will be errors in the below code because vscode can't recognice ginger 2 and tples don't format If we format {{time}} will have space which will rise error</div>
+        
+
+    </div>
+    </div>
+    <script id="lineChartJS">
+            var ctx = document.getElementById('lineChart').getContext('2d');
+            Chart.defaults.font.size = window.innerWidth>600?20:14;
+            var lineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: {{time}},
+                    datasets: [{
+                    label: 'Solar Energy output per hour',
+                    data: {{solarOutputPerhours}},
+                    fill:false,
+                    borderColor:'rgb(75,193,192)',
+                    lineTension:0.1
+                
+                  }]
+                },
+                options : {
+                responsive:true,
+                scales: {
+                    y: {
+                        title:{
+                            display:true,
+                            text:'Solar Energy Per hour',
+                            color:'rgb(75,192,192)',
+                            align:'center'
+                        }
+                    },
+                    x: {
+                        title:{
+                            display:true,
+                            text:'hours in a day',
+                            color:'rgb(75,192,192)',
+                            align:'center'
+                        }
+                    }
+                }
+                }
+               
+            });
+    </script>
+    <script id="forCSVExportData">
+      var csvFileData = [  
+        ['The total solar energy output at current hour', '{{currTimeprediction}} kw'],  
+        ['The total solar energy output per day ', '{{solarOutputPerDay}} kw'],  
+        ['Average solar energy per hour ', '{{averageSolarEnergyPerHour}} kwh'],  
+        ['Average cost savings', 'Rs {{costsavings}} per hour'],  
+        ['Total carbon emission due to Combustion of Natural gas', '0.185 kg/KWh'],
+        ['Total carbon emission that can be reduced', '{{co2}} kg'],
+        ['Nearest services for solar panel installation in {{city_name}}','https://dir.indiamart.com/search.mp?ss=solar+panel+installation&cq={{city_name}}']
+      ];  
+      function download_csv_file() {  
+  
+      //define the heading for each row of the data  
+      var csv = 'Analysis,Results\n';  
+    
+      //merge the data with CSV  
+      csvFileData.forEach((row) => {  
+          csv += row.join(',');  
+          csv += "\n";  
+      });  
+      
+
+   
+      var hiddenElement = document.createElement('a');
+      hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
+      hiddenElement.target = '_blank';
+
+      //provide the name for the CSV file to be downloaded
+      hiddenElement.download = 'solarEnergyData.csv';
+      hiddenElement.click();
+    }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+    window.onload =  function addhref(){
+        document.getElementById("nearServiceAnchor").href = "https://dir.indiamart.com/search.mp?ss=solar+panel+installation&cq={{city_name}}";
+    }
+    </script>
+
+</body>
+
+</html>
