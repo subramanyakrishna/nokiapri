@@ -10,45 +10,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Solar Energy Output Prediction</title>
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        td, th {
-            border: 1px solid #dddddd;
-            text-align: left;
-        }
-
-        tr:nth-child(even) {
-            background-color: #dddddd;
-        }
-        #lineChart{
-            border: 5px solid #dddddd;
-            width: 70% !important;
-            height: 70% !important;
-            margin: 0 auto;
-        }
-        @media only screen and (max-width: 600px) {
-            #lineChart {
-            width:100% !important;
-        }
-        .brand-logo{
-            font-size: medium !important;
-            overflow-wrap: break-word;
-        }
-        .editsize{
-            font-size: medium;
-        }
-        } 
-    </style>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='stylesheets/perday.css') }}"></link>
 </head>
 
 <body>
     <nav style="background-color:#001531;">
         <div class="nav-wrapper">
-          <a href="http://127.0.0.1:5000/" class="brand-logo left">Solar Energy Output Prediction</a>
+          <a href="https://solaroutputprediction.herokuapp.com/" class="brand-logo left">Solar Energy Output Prediction</a>
           <ul id="nav-mobile" class="right">
             <li>
               <a href="https://github.com/kulalsk2/nokiaml/" target="_blank">github</a>
@@ -57,7 +25,8 @@
         </div>
       </nav>
     <div style="padding: 20px">
-        <h5 class="editsize"><u><b>Prediction and Analysis</b></u></h5>
+        <h5 class="editsize"><u><b>Energy savings and Plots </b></u></h5>
+        <p>&#x26A1; Below prediction are based on the assumption that, Total module Area: 36646.94 m<sup>2</sup>, Module tilt: 20<sup>&#xb0;</sup>, Module orientation: 3-up landscape, Array Azimuth: 180<sup>&#xb0;</sup></p>
         <br>
         <table >
             <tbody>
@@ -73,80 +42,141 @@
                 <td>Average solar energy per hour </td>
                 <td><b>{{averageSolarEnergyPerHour}} kWh</b></td>
               </tr>
-              <tr>
-                <td>Average cost savings  </td>
-                <td><b>Rs {{costsavings}} per hour</b></td>
-              </tr>
-              <tr>
-                <td>Total carbon emission due to Combustion of Natural gas</td>
-                <td><b>0.185 kg/KWh</b></td>
-              </tr>
-              <tr>
-                <td>Total carbon emission that can be reduced </td>
-                <td><b>{{co2}} kg</b></td>
-              </tr>
-              <tr>
-                <td>Nearest services for solar panel installation in <b>{{city_name}}</b>  </td>
-                <td>
-                    <b><a id="nearServiceAnchor" target="_blank" href=""><small>(click here to go services website)</small></a></b></td>
-              </tr>
             </tbody>
           </table>
-          <button onclick="download_csv_file()"> Download CSV </button>  
-
-        
-        <br>
-        <h6>
-            <b><u>The solar energy produced at different hours in a day is plotted below</u></b>
+        <div style="width: 100%;" id="parentChart">
+        <h6 style="text-align: center;">
+            The solar energy produced at different hours in a selected date(<b>{{endDate}}</b>) is plotted below
         </h6>
 
         <br>
-        <canvas id="lineChart">
+        <canvas id="lineChartPerDay">
         </canvas>
+      <h6 style="text-align: center;">
+          The solar energy produced  30 days  before from the selected date(<b>{{endDate}}</b>)
+      </h6>
+      <span id="loading" style="color:#084fac; text-align: center; margin: 0 auto;">Please wait while the plot is being generated..... </span>
+      <br>
+      <canvas id="lineChartPerMonth">
+      </canvas>
+    </div> 
+          <br>
+        <h5 class="editsize"><u><b>Cost Analysis </b></u></h5>
+        <br>
+        <table>
+          <tbody>
+            <tr>
+              <td>Average cost of Electricity per unit KWh  </td>
+              <td><b>₹ {{5.43}}</b></td>
+            </tr>
+            <tr>
+              <td>Average cost savings  </td>
+              <td><b>₹ {{costsavings}} per hour</b></td>
+            </tr>
+          </tbody>
+        </table>
+        <br>
+        <h5 class="editsize"><u><b>Environmental Impact </b></u></h5>
+        <br>
+        <table>
+          <tbody>
+            <tr>
+              <td>Total carbon emission due to Combustion of Natural gas</td>
+              <td><b>0.185 kg/KWh</b></td>
+            </tr>
+            <tr>
+              <td>Total carbon emission that can be reduced </td>
+              <td><b>{{co2}} kg</b></td>
+            </tr>
+          </tbody>
+        </table>
+        <br>
+        <h5 class="editsize"><u><b>Want to connect to nearby Installation services?</b></u></h5>
+        <br>
+        <table>
+          <tbody>
+            <tr>
+              <td>Nearest services for solar panel installation in <b>{{city_name}}</b>  </td>
+              <td>
+                  <b><a id="nearServiceAnchor" target="_blank" href=""><small>(click here to go services website)</small></a></b></td>
+            </tr>
+          </tbody>
+        </table>
+        <button onclick="download_csv_file()"> Download CSV </button>  
+        <br>
+        
         <div style="display: none"> there will be errors in the below code because vscode can't recognice ginger 2 and tples don't format If we format {{time}} will have space which will rise error</div>
         
 
     </div>
     </div>
-    <script id="lineChartJS">
-            var ctx = document.getElementById('lineChart').getContext('2d');
+    <script src="{{ url_for('static', filename='javascript/perday.js')}}"></script>
+    <script >
+            lineChartJsForDay({{time}},{{solarOutputPerhours}});
+            
+            var ct = document.getElementById('lineChartPerMonth').getContext('2d');
+            var lineChar = new Chart(ct,{})
+
             Chart.defaults.font.size = window.innerWidth>600?20:14;
-            var lineChart = new Chart(ctx, {
-                type: 'line',
+            url = "https:solaroutputprediction.herokuapp.com/monthly?lat={{lat}}&long={{long}}&endDate={{endDate}}" //replace with https:solaroutputprediction.herokuapp.com/
+            var result = []
+            var dates = []
+            fetch(url).then((data)=>data.json()).then((data)=>{
+              console.log(data);
+              result=data["result"];
+              dates = data["dates"]
+              console.log(result)
+              console.log(dates)
+              document.getElementById("loading").innerHTML=""
+              renderTheLineChartForMonth(result,dates);
+            }) 
+            function renderTheLineChartForMonth(result, dates) {
+              
+              document.querySelector("#lineChartPerMonth").remove();
+              var link = document.createElement("canvas");
+              link.id = "lineChartPerMonth";
+              document.querySelector("#parentChart").appendChild(link);
+              canvas = document.querySelector("#lineChartPerMonth");
+              ctx = canvas.getContext("2d");
+              var lineChart = new Chart(ctx, {
+                type: "line",
                 data: {
-                    labels: {{time}},
-                    datasets: [{
-                    label: 'Solar Energy output per hour',
-                    data: {{solarOutputPerhours}},
-                    fill:false,
-                    borderColor:'rgb(75,193,192)',
-                    lineTension:0.1
-                
-                  }]
+                  labels: dates,
+                  datasets: [
+                    {
+                      label: "Solar Energy output per day",
+                      data: result,
+                      fill: false,
+                      borderColor: "rgb(75,193,192)",
+                      lineTension: 0.1,
+                    },
+                  ],
                 },
-                options : {
-                responsive:true,
-                scales: {
+                options: {
+                  responsive: true,
+                  scales: {
                     y: {
-                        title:{
-                            display:true,
-                            text:'Solar Energy Per hour',
-                            color:'rgb(75,192,192)',
-                            align:'center'
-                        }
+                      title: {
+                        display: true,
+                        text: "Solar Energy Per Day",
+                        color: "rgb(75,192,192)",
+                        align: "center",
+                      },
                     },
                     x: {
-                        title:{
-                            display:true,
-                            text:'hours in a day',
-                            color:'rgb(75,192,192)',
-                            align:'center'
-                        }
-                    }
-                }
-                }
-               
-            });
+                      title: {
+                        display: true,
+                        text: "Dates",
+                        color: "rgb(75,192,192)",
+                        align: "center",
+                      },
+                    },
+                  },
+                },
+              });
+            }
+
+            
     </script>
     <script id="forCSVExportData">
       var csvFileData = [  
