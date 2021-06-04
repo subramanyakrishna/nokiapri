@@ -3,9 +3,8 @@ import perday
 import monthly
 import utils
 from flask import Flask,render_template,request
-import pickle
-import time
-model = pickle.load(open('regressor1.pkl','rb'))
+from pickle import load
+model = load(open('gbr1.pkl','rb'))
 from datetime import date, timedelta
 
 app = Flask(__name__)
@@ -39,32 +38,28 @@ def getPerDayChart(lat,long,endDate,startDate):
 def home():
     lat = float(request.form['lat'])
     long = float(request.form['long'])
-    
-    # endDate = date.today().isoformat() 
     endDate = request.form['endDate']
-    print(endDate)
+    hour =  utils.getTime(lat,long)
     endDate = date.fromisoformat(endDate)
+    if date.today() < endDate:
+        return {"response":"Please select date lesser than todays date since we can't get the future environmental condition to predict solar output","mainpageUrl":"https://solaroutputprediction.herokuapp.com/"}
+    if(utils.checkLimitExceeded()):
+        return {"response":"Weatherbit API limit exceeded"}
     startDate = (endDate-timedelta(days=1)).isoformat() 
-    # yesterday = request.form['yesterday']
-    print(endDate,startDate)
     solarOutputPerhours,times,solarOutputPerDay = getPerDayChart(lat,long,endDate,startDate)
-    X,city_name = mainpage.getWeatherData(lat,long)
+    X,city_name = mainpage.getWeatherData(lat,long,hour)
     X = utils.getCorrectUnit(X)
-    timestamp = time.strftime('%H:%M:%S')
-    hour =  int(timestamp[:2])
     averageSolarEnergyPerHour = round(sum(solarOutputPerhours)/12,3)
     costsavings = round(5.73*averageSolarEnergyPerHour,3)
     co2 = round(0.185*averageSolarEnergyPerHour,3)
     if (hour>=0 and hour<=5) or (hour>=18 and hour<=24):
         return render_template('perday.html',currTimeprediction=0,solarOutputPerhours=solarOutputPerhours,time=times,solarOutputPerDay=solarOutputPerDay,costsavings = costsavings,averageSolarEnergyPerHour=averageSolarEnergyPerHour,co2 = co2,city_name=city_name,lat=lat,long=long,endDate=endDate)
-    X.insert(0,hour)
     X = list([X])
     pred = round(model.predict(X)[0],3)
     return  render_template('perday.html',currTimeprediction = pred,solarOutputPerhours=solarOutputPerhours,time=times,solarOutputPerDay=solarOutputPerDay,costsavings = costsavings,averageSolarEnergyPerHour=averageSolarEnergyPerHour,co2 = co2,city_name=city_name,lat=lat,long=long,endDate=endDate)
 
 @app.route('/monthly',methods=['POST','GET'])
 def monthlyRoute():
-    print("in monthly")
     lat = float(request.args.get('lat'))
     long = float(request.args.get('long'))
     endDate = request.args.get('endDate')

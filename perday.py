@@ -1,16 +1,16 @@
-import requests
+from requests import request
 
 
     
 def getWeatherDataForPerDay(lat,long,endDate,startDate):
     urlWeatherBit = "https://api.weatherbit.io/v2.0/history/hourly?lat="+str(lat)+"&lon="+str(long)+"&start_date="+str(startDate)+"&end_date="+str(endDate)+"&tz=local&key=c19308a05e44450f805946e96f0743d0"
-    res = requests.request("GET", urlWeatherBit)
+    res = request("GET", urlWeatherBit)
     resFromWebit = res.json()
     return resFromWebit
 
 def locElevationForPerDay(lat, long):
     urlAltitude = "https://api.opentopodata.org/v1/aster30m?locations="+str(lat)+","+str(long)+""  
-    resAltimeter = requests.request("GET", urlAltitude).json()
+    resAltimeter = request("GET", urlAltitude).json()
     altimeter=float(resAltimeter['results'][0]['elevation'])
     return altimeter
 

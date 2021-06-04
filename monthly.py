@@ -1,12 +1,11 @@
 
-import requests
-import xgboost as xgb
+from requests import request
 from datetime import date, timedelta
-import time
-model2 = xgb.XGBRegressor()
+from xgboost import XGBRegressor
+model2 = XGBRegressor()
 model2.load_model("xgb_r_sklearn.txt")
-import numpy as np
-
+from numpy import array
+from time import sleep
 def getCorrectUnit(X):
     X[1] = 0.621371 * X[1]
     X[5] = 2.23694 * X[5]
@@ -39,21 +38,23 @@ def refinedData(resFromWebit,altimeter,visibility=0.6):
 
 def locElevationForPerDay(lat, long):
     urlAltitude = "https://api.opentopodata.org/v1/aster30m?locations="+str(lat)+","+str(long)+""  
-    resAltimeter = requests.request("GET", urlAltitude).json()
+    resAltimeter = request("GET", urlAltitude).json()
     altimeter=float(resAltimeter['results'][0]['elevation'])
     return altimeter
 
 #date.today().isoformat()
 def monthlyData(lat,long,endDate):
-    print("monthlyData")
     altimeter = locElevationForPerDay(lat, long)
     i=1
     dataForPrediction=[]
     dates = []
     endDate = date.fromisoformat(endDate)
-    startDate = (endDate-timedelta(days=1)).isoformat() 
-    urlWeatherBit = "https://api.weatherbit.io/v2.0/history/hourly?lat="+str(lat)+"&lon="+str(long)+"&start_date="+str(startDate)+"&end_date="+str(endDate)+"&tz=local&key=c19308a05e44450f805946e96f0743d0"
-    resForVisibility = requests.request("GET", urlWeatherBit)
+    startDate = (endDate-timedelta(days=1)).isoformat()
+    urlWeatherBit = "https://api.weatherbit.io/v2.0/history/hourly?lat="+str(lat)+"&lon="+str(long)+"&start_date="+str(startDate)+"&end_date="+str(endDate)+"&tz=local&key=59f5d57433e2469496b0fb171cbadd55"
+    resForVisibility = request("GET", urlWeatherBit)
+    if resForVisibility.status_code==428:
+        urlWeatherBit = "https://api.weatherbit.io/v2.0/history/hourly?lat="+str(lat)+"&lon="+str(long)+"&start_date="+str(startDate)+"&end_date="+str(endDate)+"&tz=local&key=f7936d7a38314c8fb59614efbf9801f2"
+        resForVisibility = request("GET", urlWeatherBit)
     resFromWebit = resForVisibility.json()
     visibility = float(resFromWebit['data'][12]['vis'])
     while(i<31):
@@ -61,16 +62,14 @@ def monthlyData(lat,long,endDate):
         dates.append(days_before_i)
         days_before_iplus1 = (endDate-timedelta(days=i+1)).isoformat()
         apiUrlForMonth  = "https://api.weatherbit.io/v2.0/history/daily?lat="+str(lat)+"&lon="+str(long)+"&start_date={start}&end_date={end}&key=c19308a05e44450f805946e96f0743d0".format(start=days_before_iplus1,end=days_before_i)
-        res = requests.request("GET",apiUrlForMonth).json()
+        res = request("GET",apiUrlForMonth).json()
         dataForPrediction.append(refinedData(res,altimeter,visibility))
         i=i+2
-    dataForPrediction = np.array(dataForPrediction)
-    print(dates)
+    dataForPrediction = array(dataForPrediction)
     result = model2.predict(dataForPrediction)
     result = list(result)
     result = [str(x) for x in result]
-
     # dates = ['2021-05-22', '2021-05-20', '2021-05-18', '2021-05-16', '2021-05-14', '2021-05-12', '2021-05-10', '2021-05-08', '2021-05-06', '2021-05-04', '2021-05-02', '2021-04-30', '2021-04-28', '2021-04-26', '2021-04-24']
     # result = [18579.14  ,18241.4   ,19994.53  ,16318.705 ,17704.342 ,16928.57 , 18296.838,18112.727 ,30431.305, 16663.742 ,18278.76 , 12214.036,15264.97 , 17067.67,13023.178]
-    # time.sleep(3)
+    # sleep(3)
     return {"result":result,"dates":dates}

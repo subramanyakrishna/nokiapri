@@ -1,9 +1,12 @@
 
-import requests
+from requests import request
 
-def getWeatherData(lat,long):
-    urlWeatherBit = "https://api.weatherbit.io/v2.0/current?lat="+str(lat)+"&lon="+str(long)+"&key=f6bba80d9ad242b4b82bfb54364059ea"
-    res = requests.request("GET", urlWeatherBit)
+def getWeatherData(lat,long,hour):
+    urlWeatherBit = "https://api.weatherbit.io/v2.0/current?lat="+str(lat)+"&lon="+str(long)+"&key=f7936d7a38314c8fb59614efbf9801f2"
+    res = request("GET", urlWeatherBit)
+    if res.status_code==428:
+        urlWeatherBit = "https://api.weatherbit.io/v2.0/current?lat="+str(lat)+"&lon="+str(long)+"&key=59f5d57433e2469496b0fb171cbadd55"
+        res = request("GET", urlWeatherBit)
     resFromWebit = res.json()
     city_name = resFromWebit['data'][0]["city_name"]
     visibility = float(resFromWebit['data'][0]['vis'])
@@ -14,9 +17,9 @@ def getWeatherData(lat,long):
     windspeed = float(resFromWebit['data'][0]['wind_spd'])
     stationpressure = float(resFromWebit['data'][0]['pres'])
     urlAltitude = "https://api.opentopodata.org/v1/aster30m?locations="+str(lat)+","+str(long)+""  
-    resAltimeter = requests.request("GET", urlAltitude).json()
+    resAltimeter = request("GET", urlAltitude).json()
     altimeter=float(resAltimeter['results'][0]['elevation'])
-    X  = [cloudcoverage,visibility,temperature,dewpoint,relativehumidity,windspeed,stationpressure,altimeter]
+    X  = [hour,cloudcoverage,visibility,temperature,dewpoint,relativehumidity,windspeed,stationpressure,altimeter]
     return X,city_name
 
 

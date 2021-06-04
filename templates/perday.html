@@ -112,13 +112,13 @@
     </div>
     <script src="{{ url_for('static', filename='javascript/perday.js')}}"></script>
     <script >
-            lineChartJsForDay({{time}},{{solarOutputPerhours}});
+            lineChartJsForDay({{time}},{{solarOutputPerhours}}); 
             
             var ct = document.getElementById('lineChartPerMonth').getContext('2d');
             var lineChar = new Chart(ct,{})
 
             Chart.defaults.font.size = window.innerWidth>600?20:14;
-            url = "https:solaroutputprediction.herokuapp.com/monthly?lat={{lat}}&long={{long}}&endDate={{endDate}}" //replace with https:solaroutputprediction.herokuapp.com/
+            url = "/monthly?lat={{lat}}&long={{long}}&endDate={{endDate}}" //replace with https:solaroutputprediction.herokuapp.com/
             var result = []
             var dates = []
             fetch(url).then((data)=>data.json()).then((data)=>{
